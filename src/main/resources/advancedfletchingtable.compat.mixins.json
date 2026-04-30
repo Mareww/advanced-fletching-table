@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "package": "net.mario.advancedfletchingtable.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "CauldronTipMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

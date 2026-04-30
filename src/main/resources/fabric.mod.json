@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "advancedfletchingtable",
+  "version": "${version}",
+  "name": "Advanced Fletching Table",
+  "description": "Gives the fletching table real purpose. Craft arrows and spectral arrows, uncraft them back to materials, color your arrows with dye, remove colors or potion effects, and preserve trail colors through tipping. Supports wood variant arrows and dispensers.",
+  "authors": ["Marew"],
+  "icon": "assets/advancedfletchingtable/icon.png",
+  "contact": {},
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["net.mario.advancedfletchingtable.AdvancedFletchingTable"],
+    "client": ["net.mario.advancedfletchingtable.client.AdvancedFletchingTableClient"],
+    "modmenu": ["net.mario.advancedfletchingtable.client.ModMenuIntegration"]
+  },
+  "mixins": ["advancedfletchingtable.mixins.json", "advancedfletchingtable.compat.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.14.22",
+    "fabric-api": "*",
+    "minecraft": "~1.20.1"
+  }
+}

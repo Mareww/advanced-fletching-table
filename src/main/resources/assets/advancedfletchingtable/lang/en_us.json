@@ -1,0 +1,34 @@
+{
+  "container.advancedfletchingtable.untint": "Fletching Table",
+  "container.advancedfletchingtable.craft": "Fletching Table",
+
+  "text.autoconfig.advancedfletchingtable.title": "Advanced Fletching Table",
+
+  "text.autoconfig.advancedfletchingtable.option.enableCraftTab": "Enable Craft Tab",
+  "text.autoconfig.advancedfletchingtable.option.enableCraftTab.@Tooltip": "Show the Craft tab in the fletching table.",
+
+  "text.autoconfig.advancedfletchingtable.option.enableUntintTab": "Enable Untint Tab",
+  "text.autoconfig.advancedfletchingtable.option.enableUntintTab.@Tooltip": "Show the Untint tab in the fletching table.",
+
+  "text.autoconfig.advancedfletchingtable.option.enableCustomizeTab": "Enable Customize Tab",
+  "text.autoconfig.advancedfletchingtable.option.enableCustomizeTab.@Tooltip": "Show the Customize tab in the fletching table.",
+
+  "text.autoconfig.advancedfletchingtable.option.enableUncrafting": "Enable Uncrafting",
+  "text.autoconfig.advancedfletchingtable.option.enableUncrafting.@Tooltip": "Allow placing a plain arrow in the = slot to recover feather, stick and flint.",
+
+  "text.autoconfig.advancedfletchingtable.option.craftedArrowCount": "Crafted Arrow Count",
+  "text.autoconfig.advancedfletchingtable.option.craftedArrowCount.@Tooltip": "How many arrows are produced from feather + stick + flint.",
+
+  "text.autoconfig.advancedfletchingtable.option.spectralArrowCount": "Spectral Arrow Count",
+  "text.autoconfig.advancedfletchingtable.option.spectralArrowCount.@Tooltip": "How many spectral arrows are produced from any spectral recipe.",
+
+  "text.autoconfig.advancedfletchingtable.option.requireGlowstoneForColor": "Require Glowstone for Color",
+  "text.autoconfig.advancedfletchingtable.option.requireGlowstoneForColor.@Tooltip": "Whether glowstone dust is required in the Customize tab to apply a color.",
+
+  "text.autoconfig.advancedfletchingtable.option.preserveTrailColorCraftingTable": "Preserve Color — Crafting Table",
+  "text.autoconfig.advancedfletchingtable.option.preserveTrailColorCraftingTable.@Tooltip": "Keep TrailColor when tipping colored arrows in a vanilla crafting table.",
+
+  "text.autoconfig.advancedfletchingtable.option.preserveTrailColorCauldron": "Preserve Color — Advanced Cauldron",
+  "text.autoconfig.advancedfletchingtable.option.preserveTrailColorCauldron.@Tooltip[0]": "Keep trail color when tipping colored arrows in a brewing cauldron.",
+  "text.autoconfig.advancedfletchingtable.option.preserveTrailColorCauldron.@Tooltip[1]": "Requires the Advanced Cauldron mod. Has no effect without it."
+}
