@@ -94,9 +94,7 @@ public class FletchingScreenHandler extends ScreenHandler {
             });
             addSlot(new Slot(inventory, CRAFT_STICK, 65, 27) {
                 @Override public boolean canInsert(ItemStack s) {
-                    if (getMode() != MODE_CRAFT || uncraftMode) return false;
-                    String p = Registries.ITEM.getId(s.getItem()).getPath();
-                    return p.equals("stick") || p.endsWith("_stick");
+                    return getMode() == MODE_CRAFT && !uncraftMode && isStick(s);
                 }
                 @Override public void onTakeItem(PlayerEntity player, ItemStack s) {
                     super.onTakeItem(player, s);
@@ -126,7 +124,7 @@ public class FletchingScreenHandler extends ScreenHandler {
                 @Override public boolean canInsert(ItemStack s) {
                     return getMode() == MODE_CRAFT
                             && AdvancedFletchingTable.CONFIG.enableUncrafting
-                            && computeUncraft(s) != null;
+                            && isUncraftableArrowType(s);
                 }
                 @Override public boolean canTakeItems(net.minecraft.entity.player.PlayerEntity player) {
                     return !collectingAll;
@@ -234,34 +232,52 @@ public class FletchingScreenHandler extends ScreenHandler {
 
     // ── Uncraft ───────────────────────────────────────────────────────────────
 
-    /** Returns [feather*n, stick*n, flint*n] or null if the arrow can't be uncrafted. */
-    private static ItemStack[] computeUncraft(ItemStack arrow) {
-        if (arrow.isOf(Items.SPECTRAL_ARROW) || arrow.isOf(Items.TIPPED_ARROW)) return null;
-        // Colored or tipped arrows must be untinted/untipped first
+    /** True if this arrow type is valid for uncrafting (ignores count and NBT quantity). */
+    private static boolean isUncraftableArrowType(ItemStack arrow) {
+        if (arrow.isOf(Items.SPECTRAL_ARROW) || arrow.isOf(Items.TIPPED_ARROW)) return false;
         if (arrow.hasNbt() && (arrow.getNbt().contains("TrailColor")
-                || arrow.getNbt().contains("Potion"))) return null;
+                || arrow.getNbt().contains("Potion"))) return false;
         String path = Registries.ITEM.getId(arrow.getItem()).getPath();
-        if (!path.endsWith("arrow")) return null;
-        String prefix = path.substring(0, path.length() - "arrow".length()); // e.g. "oak_"
+        if (!path.endsWith("arrow")) return false;
+        String prefix = path.substring(0, path.length() - "arrow".length());
+        if (prefix.isEmpty()) return true; // vanilla arrow
+        if (prefix.equals("bamboo_")) return true;
+        String stickPath = prefix + "stick";
+        return Registries.ITEM.getIds().stream()
+                .anyMatch(id -> id.getPath().equals(stickPath)
+                        && Registries.ITEM.get(id) != Items.AIR);
+    }
+
+    /**
+     * Returns [feather*sets, stick*sets, flint*sets] or null if the arrow can't be uncrafted.
+     * Requires at least craftedArrowCount arrows to yield 1 set, preventing craft→uncraft duplication.
+     */
+    private ItemStack[] computeUncraft(ItemStack arrow) {
+        if (!isUncraftableArrowType(arrow)) return null;
+        int craftCount = AdvancedFletchingTable.CONFIG.craftedArrowCount;
+        int sets = arrow.getCount() / craftCount;
+        if (sets < 1) return null; // not enough arrows for even one set
+        String path = Registries.ITEM.getId(arrow.getItem()).getPath();
+        String prefix = path.substring(0, path.length() - "arrow".length());
         ItemStack stick;
         if (prefix.isEmpty()) {
-            stick = new ItemStack(Items.STICK, 1);
+            stick = new ItemStack(Items.STICK, sets);
+        } else if (prefix.equals("bamboo_")) {
+            stick = new ItemStack(Items.BAMBOO, sets);
         } else {
             String stickPath = prefix + "stick";
-            // Search all registered namespaces for a matching stick item
             var stickItem = Registries.ITEM.getIds().stream()
                     .filter(id -> id.getPath().equals(stickPath))
                     .map(Registries.ITEM::get)
                     .filter(item -> item != Items.AIR)
                     .findFirst().orElse(null);
-            stick = stickItem != null ? new ItemStack(stickItem, 1) : null;
+            stick = stickItem != null ? new ItemStack(stickItem, sets) : null;
         }
         if (stick == null) return null;
-        int n = arrow.getCount();
         return new ItemStack[]{
-            new ItemStack(Items.FEATHER, n),
-            stick.copyWithCount(n),
-            new ItemStack(Items.FLINT, n)
+            new ItemStack(Items.FEATHER, sets),
+            stick,
+            new ItemStack(Items.FLINT, sets)
         };
     }
 
@@ -272,7 +288,12 @@ public class FletchingScreenHandler extends ScreenHandler {
         // Give any remaining uncraft result items (the taken slot is already empty)
         for (int idx : new int[]{CRAFT_FEATHER, CRAFT_STICK, CRAFT_FLINT}) {
             ItemStack r = inventory.getStack(idx);
-            if (!r.isEmpty()) { player.giveItemStack(r.copy()); inventory.setStack(idx, ItemStack.EMPTY); }
+            if (!r.isEmpty()) {
+                ItemStack give = r.copy();
+                inventory.setStack(idx, ItemStack.EMPTY);
+                if (!player.giveItemStack(give) && !give.isEmpty())
+                    player.dropItem(give, false, false);
+            }
         }
         uncraftMode = false;
         player.playSound(SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundCategory.PLAYERS, 1.0f, 1.2f);
@@ -337,16 +358,23 @@ public class FletchingScreenHandler extends ScreenHandler {
 
             if (hasUncraftArrow && !craftOutFromSystem && (uncraftMode || craftInputsEmpty())) {
                 // Player placed this arrow for uncrafting
-                ItemStack[] result = computeUncraft(arrowInOut);
-                if (result != null) {
-                    uncraftMode = true;
-                    inventory.setStack(CRAFT_FEATHER, result[0]);
-                    inventory.setStack(CRAFT_STICK,   result[1]);
-                    inventory.setStack(CRAFT_FLINT,   result[2]);
-                } else {
+                if (!isUncraftableArrowType(arrowInOut)) {
+                    // Invalid type — clear it
                     clearUncraftPreview();
                     inventory.setStack(CRAFT_OUT, ItemStack.EMPTY);
                     uncraftMode = false;
+                } else {
+                    ItemStack[] result = computeUncraft(arrowInOut);
+                    if (result != null) {
+                        uncraftMode = true;
+                        inventory.setStack(CRAFT_FEATHER, result[0]);
+                        inventory.setStack(CRAFT_STICK,   result[1]);
+                        inventory.setStack(CRAFT_FLINT,   result[2]);
+                    } else {
+                        // Valid type but insufficient count — keep arrow, no preview
+                        clearUncraftPreview();
+                        uncraftMode = false;
+                    }
                 }
             } else if (!hasUncraftArrow || craftOutFromSystem) {
                 // Either empty slot, or a system result that must be kept in sync with inputs
@@ -444,18 +472,30 @@ public class FletchingScreenHandler extends ScreenHandler {
     }
 
     private static boolean isStick(ItemStack stack) {
+        if (stack.isOf(Items.BAMBOO)) return true;
         String p = Registries.ITEM.getId(stack.getItem()).getPath();
         return p.equals("stick") || p.endsWith("_stick");
     }
 
     private static ItemStack arrowForStick(ItemStack stick, int count) {
+        // Raw bamboo → bamboo_arrow
+        if (stick.isOf(Items.BAMBOO)) {
+            var found = Registries.ITEM.getIds().stream()
+                    .filter(id -> id.getPath().equals("bamboo_arrow"))
+                    .map(Registries.ITEM::get)
+                    .filter(item -> item != Items.AIR)
+                    .findFirst().orElse(null);
+            return found != null ? new ItemStack(found, count) : new ItemStack(Items.ARROW, count);
+        }
         String path = Registries.ITEM.getId(stick.getItem()).getPath();
-        if (!path.equals("stick")) {
+        if (path.endsWith("_stick")) {
             String ap = path.substring(0, path.length() - "stick".length()) + "arrow";
-            var mstv = Registries.ITEM.get(new Identifier("mstv-mweaponv", ap));
-            if (mstv != Items.AIR) return new ItemStack(mstv, count);
-            var ns = Registries.ITEM.get(new Identifier(Registries.ITEM.getId(stick.getItem()).getNamespace(), ap));
-            if (ns != Items.AIR) return new ItemStack(ns, count);
+            var found = Registries.ITEM.getIds().stream()
+                    .filter(id -> id.getPath().equals(ap))
+                    .map(Registries.ITEM::get)
+                    .filter(item -> item != Items.AIR)
+                    .findFirst().orElse(null);
+            if (found != null) return new ItemStack(found, count);
         }
         return new ItemStack(Items.ARROW, count);
     }

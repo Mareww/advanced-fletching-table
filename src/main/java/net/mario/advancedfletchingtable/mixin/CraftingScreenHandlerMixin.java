@@ -15,14 +15,24 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(CraftingScreenHandler.class)
 public class CraftingScreenHandlerMixin {
 
-    @Inject(method = "updateResult", at = @At("RETURN"))
+    @Inject(method = "updateResult",
+            at = @At(value = "INVOKE",
+                     target = "Lnet/minecraft/inventory/CraftingResultInventory;setStack(ILnet/minecraft/item/ItemStack;)V",
+                     shift = At.Shift.AFTER))
     private static void preserveTrailColor(ScreenHandler handler, World world, PlayerEntity player,
                                             RecipeInputInventory craftingInventory,
                                             CraftingResultInventory resultInventory,
                                             CallbackInfo ci) {
-        if (!net.mario.advancedfletchingtable.AdvancedFletchingTable.CONFIG.preserveTrailColorCraftingTable) return;
         ItemStack result = resultInventory.getStack(0);
-        if (result.isEmpty() || !result.hasNbt() || !result.getNbt().contains("Potion")) return;
+        if (result.isEmpty()) return;
+        // Cap any arrow type from crafting table to 1 (includes wood variants like warped_arrow)
+        String path = net.minecraft.registry.Registries.ITEM.getId(result.getItem()).getPath();
+        if (path.endsWith("arrow") && !path.contains("tipped") && result.getCount() > 1) {
+            result.setCount(1);
+            return;
+        }
+        if (!net.mario.advancedfletchingtable.AdvancedFletchingTable.CONFIG.preserveTrailColorCraftingTable) return;
+        if (!result.hasNbt() || !result.getNbt().contains("Potion")) return;
         for (int i = 0; i < craftingInventory.size(); i++) {
             ItemStack in = craftingInventory.getStack(i);
             if (in.hasNbt() && in.getNbt().contains("TrailColor")) {
