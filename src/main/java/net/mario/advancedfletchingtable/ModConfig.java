@@ -25,6 +25,10 @@ public class ModConfig implements ConfigData {
 
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 64)
+    public int craftingTableArrowCount = 1;
+
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 64)
     public int spectralArrowCount = 1;
 
     @ConfigEntry.Gui.Tooltip

@@ -22,6 +22,9 @@
   "text.autoconfig.advancedfletchingtable.option.spectralArrowCount": "Spectral Arrow Count",
   "text.autoconfig.advancedfletchingtable.option.spectralArrowCount.@Tooltip": "How many spectral arrows are produced from any spectral recipe.",
 
+  "text.autoconfig.advancedfletchingtable.option.craftingTableArrowCount": "Crafting Table Arrow Count",
+  "text.autoconfig.advancedfletchingtable.option.craftingTableArrowCount.@Tooltip": "How many arrows the vanilla crafting table produces (fletching table is separate).",
+
   "text.autoconfig.advancedfletchingtable.option.requireGlowstoneForColor": "Require Glowstone for Color",
   "text.autoconfig.advancedfletchingtable.option.requireGlowstoneForColor.@Tooltip": "Whether glowstone dust is required in the Customize tab to apply a color.",
 

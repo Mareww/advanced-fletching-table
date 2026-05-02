@@ -27,8 +27,9 @@ public class CraftingScreenHandlerMixin {
         if (result.isEmpty()) return;
         // Cap any arrow type from crafting table to 1 (includes wood variants like warped_arrow)
         String path = net.minecraft.registry.Registries.ITEM.getId(result.getItem()).getPath();
-        if (path.endsWith("arrow") && !path.contains("tipped") && result.getCount() > 1) {
-            result.setCount(1);
+        int tableMax = net.mario.advancedfletchingtable.AdvancedFletchingTable.CONFIG.craftingTableArrowCount;
+        if (path.endsWith("arrow") && !path.contains("tipped") && result.getCount() > tableMax) {
+            result.setCount(tableMax);
             return;
         }
         if (!net.mario.advancedfletchingtable.AdvancedFletchingTable.CONFIG.preserveTrailColorCraftingTable) return;
