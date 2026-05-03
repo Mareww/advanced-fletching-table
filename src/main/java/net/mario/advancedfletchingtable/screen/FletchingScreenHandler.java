@@ -410,7 +410,18 @@ public class FletchingScreenHandler extends ScreenHandler {
         boolean hasGlow    = !glow.isEmpty()    && glow.isOf(Items.GLOWSTONE_DUST);
         int spectral = AdvancedFletchingTable.CONFIG.spectralArrowCount;
         int crafted  = AdvancedFletchingTable.CONFIG.craftedArrowCount;
-        if (hasArrow && hasGlow)                           return new ItemStack(Items.SPECTRAL_ARROW, spectral);
+        if (hasArrow && hasGlow) {
+            ItemStack out = new ItemStack(Items.SPECTRAL_ARROW, spectral);
+            // Store original arrow type so untint can restore it
+            Identifier arrowId = Registries.ITEM.getId(arrow.getItem());
+            out.getOrCreateNbt().putString("OriginalArrow", arrowId.toString());
+            // Preserve color if present
+            if (arrow.hasNbt() && arrow.getNbt().contains("TrailColor")) {
+                out.getOrCreateNbt().putInt("TrailColor", arrow.getNbt().getInt("TrailColor"));
+                out.getOrCreateNbt().putString("TrailColorName", arrow.getNbt().getString("TrailColorName"));
+            }
+            return out;
+        }
         if (hasFeather && hasStick && hasFlint && hasGlow) return new ItemStack(Items.SPECTRAL_ARROW, spectral);
         if (hasFeather && hasStick && hasFlint)            return arrowForStick(stick, crafted);
         return ItemStack.EMPTY;
@@ -422,6 +433,15 @@ public class FletchingScreenHandler extends ScreenHandler {
         if (arrow.isEmpty() || !(isArrowLike(arrow))) return ItemStack.EMPTY;
         ItemStack result = arrow.copy();
         if (liquid.isOf(Items.WATER_BUCKET)) {
+            // Spectral arrow → restore original plain arrow type
+            if (arrow.isOf(Items.SPECTRAL_ARROW)) {
+                String originalId = (arrow.hasNbt() && arrow.getNbt().contains("OriginalArrow"))
+                        ? arrow.getNbt().getString("OriginalArrow") : "minecraft:arrow";
+                var originalItem = Registries.ITEM.get(new Identifier(originalId));
+                if (originalItem == Items.AIR) originalItem = Items.ARROW;
+                return new ItemStack(originalItem, result.getCount());
+            }
+            // Colored arrow → remove TrailColor
             if (!arrow.hasNbt() || !arrow.getNbt().contains("TrailColor")) return ItemStack.EMPTY;
             result.getNbt().remove("TrailColor");
             result.getNbt().remove("TrailColorName");

@@ -29,7 +29,7 @@ public class ModConfig implements ConfigData {
 
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 64)
-    public int spectralArrowCount = 1;
+    public int spectralArrowCount = 4;
 
     @ConfigEntry.Gui.Tooltip
     public boolean requireGlowstoneForColor = true;
